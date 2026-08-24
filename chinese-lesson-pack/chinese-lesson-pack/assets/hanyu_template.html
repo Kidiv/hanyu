@@ -1,0 +1,353 @@
+<title>Ханьюй-тренажёр</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+SC:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#f2f4f6; --panel:#ffffff; --ink:#22282d; --dim:#68727c; --line:#dce1e6;
+  --acc:#b23a26; --on-acc:#ffffff; --good:#2e7d5b; --chip:#e7ebee; --used:#f0f2f4;
+  --shadow:0 1px 3px rgba(30,40,50,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16181b; --panel:#1f2226; --ink:#e9eaec; --dim:#98a1aa; --line:#33383e;
+    --acc:#d9573f; --on-acc:#ffffff; --good:#5db88e; --chip:#2a2e33; --used:#1a1d20;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16181b; --panel:#1f2226; --ink:#e9eaec; --dim:#98a1aa; --line:#33383e;
+  --acc:#d9573f; --on-acc:#ffffff; --good:#5db88e; --chip:#2a2e33; --used:#1a1d20;
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans","Segoe UI",sans-serif;
+  min-height:100vh;padding-bottom:76px}
+.hz{font-family:"Noto Serif SC","SimSun",serif}
+header{padding:14px 16px 8px;max-width:760px;margin:0 auto}
+h1{font-size:19px;margin:0 0 10px;font-weight:600;letter-spacing:.2px}
+h1 .hz{color:var(--acc);margin-right:8px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+main{max-width:760px;margin:0 auto;padding:4px 16px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);
+  display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:5}
+.tabbar button{background:none;border:0;color:var(--dim);font:inherit;font-size:12px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 10px;border-radius:10px}
+.tabbar button .ico{font-size:20px;line-height:1}
+.tabbar button.on{color:var(--acc)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:16px;margin:10px 0}
+button.act{background:var(--chip);color:var(--ink);border:0;border-radius:10px;padding:10px 18px;
+  font:inherit;font-weight:500;cursor:pointer}
+button.act.primary{background:var(--acc);color:var(--on-acc)}
+button.act.ok{color:var(--good)}
+button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+/* карточки */
+#fc-q{font-size:52px;text-align:center;margin:18px 0 6px;min-height:70px}
+#fc-q.small{font-size:20px;font-family:"IBM Plex Sans",sans-serif}
+#fc-a{text-align:center;color:var(--acc);min-height:24px;font-size:16px}
+#fc-parts{text-align:center;color:var(--dim);font-size:13px;min-height:20px;margin-top:4px}
+#fc-lesson{color:var(--dim);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+#fc-btns{justify-content:center;margin-top:14px}
+#fc-stat{color:var(--dim);font-size:12px;text-align:center;margin-top:10px}
+/* слова */
+#search{width:100%;padding:10px 14px;border:1px solid var(--line);border-radius:10px;
+  background:var(--panel);color:var(--ink);font:inherit}
+.wrow{display:grid;grid-template-columns:96px 1fr;gap:4px 14px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.wrow:last-child{border-bottom:0}
+.wrow .hz{font-size:24px}
+.wrow .py{color:var(--acc);font-size:13px}
+.wrow .ru{font-size:14px}
+.wrow .parts{grid-column:1/3;color:var(--dim);font-size:12.5px}
+.lesson-tag{color:var(--dim);font-size:11px}
+/* фразы */
+#sx-ru{font-size:16px;margin:4px 0 10px}
+#sx-built{font-size:26px;min-height:40px;color:var(--acc)}
+#sx-built.good{color:var(--good)}
+#sx-verdict{min-height:22px;font-size:14px;color:var(--dim)}
+#sx-chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+#sx-chips button{font-size:20px;padding:8px 14px;background:var(--chip);border:0;border-radius:10px;
+  color:var(--ink);cursor:pointer}
+#sx-chips button:disabled{background:var(--used);color:var(--dim)}
+#sx-score{color:var(--dim);font-size:12px;margin-top:8px}
+/* тексты */
+.t-h{color:var(--acc);font-weight:600;font-size:16px;margin:20px 0 8px}
+.t-zh{font-size:19px;margin:6px 0 0}
+.t-pr{color:var(--dim);font-size:13px;margin:0 0 4px}
+.t-pr .p{color:var(--acc)}
+.t-b{color:var(--dim);font-size:13px;border-left:3px solid var(--line);padding-left:10px;margin:10px 0}
+.toggles{position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:3}
+.hidden{display:none}
+.hz-c{cursor:pointer}
+.hz-c:active{color:var(--acc)}
+#sheet{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);
+  box-shadow:0 -4px 20px rgba(0,0,0,.18);border-radius:16px 16px 0 0;padding:16px;z-index:10;
+  max-height:65vh;overflow-y:auto;max-width:760px;margin:0 auto}
+#sheet.hidden{display:none}
+#sheet-close{float:right;background:var(--chip);border:0;border-radius:8px;color:var(--dim);
+  font:inherit;padding:4px 10px;cursor:pointer}
+#sheet-char{font-size:56px;line-height:1.2}
+#sheet-py{color:var(--acc);font-size:15px}
+#sheet-parts{color:var(--dim);font-size:13px;margin:4px 0 8px}
+#sheet-words .wrow .hz{font-size:20px}
+@media (min-width:700px){
+  #fc-q{font-size:64px}
+}
+</style>
+
+<header>
+  <h1><span class="hz">汉语</span>Ханьюй-тренажёр</h1>
+  <div class="chips" id="lessons"></div>
+</header>
+<main>
+  <section id="tab-fc">
+    <div class="card">
+      <div id="fc-lesson"></div>
+      <div id="fc-q" class="hz"></div>
+      <div id="fc-a"></div>
+      <div id="fc-parts"></div>
+      <div class="row" id="fc-btns"></div>
+      <div id="fc-stat"></div>
+    </div>
+  </section>
+  <section id="tab-words" class="hidden">
+    <input id="search" placeholder="поиск: иероглиф, пиньинь или перевод">
+    <div class="card" id="wlist"></div>
+  </section>
+  <section id="tab-sx" class="hidden">
+    <div class="card">
+      <div id="sx-ru"></div>
+      <div id="sx-built" class="hz">…</div>
+      <div id="sx-verdict"></div>
+      <div id="sx-chips"></div>
+      <div class="row">
+        <button class="act" id="sx-reset">сброс</button>
+        <button class="act primary" id="sx-check">проверить</button>
+        <button class="act ok" id="sx-next">следующее</button>
+      </div>
+      <div id="sx-score"></div>
+    </div>
+  </section>
+  <section id="tab-texts" class="hidden">
+    <div class="toggles row">
+      <button class="act" id="tg-py">скрыть пиньинь</button>
+      <button class="act" id="tg-ru">скрыть перевод</button>
+    </div>
+    <div id="treader"></div>
+  </section>
+</main>
+<div id="sheet" class="hidden">
+  <button id="sheet-close">закрыть</button>
+  <div id="sheet-char" class="hz"></div>
+  <div id="sheet-py"></div>
+  <div id="sheet-parts"></div>
+  <div id="sheet-words"></div>
+</div>
+<nav class="tabbar">
+  <button data-tab="fc" class="on"><span class="ico hz">卡</span>Карточки</button>
+  <button data-tab="words"><span class="ico hz">词</span>Слова</button>
+  <button data-tab="sx"><span class="ico hz">句</span>Фразы</button>
+  <button data-tab="texts"><span class="ico hz">文</span>Тексты</button>
+</nav>
+
+<script>
+const DATA = __DATA__;
+const LS = "hanyu-progress-v1";
+const ROTATION = DATA.rotation || DATA.lessons;   // уроки в ротации карточек при фильтре «Все»
+const inRotation = o => lesson === "all" ? ROTATION.includes(o.l) : o.l === lesson;
+let progress = {};
+try { progress = JSON.parse(localStorage.getItem(LS)) || {}; } catch(e) {}
+const saveP = () => { try { localStorage.setItem(LS, JSON.stringify(progress)); } catch(e) {} };
+let lesson = "all";   // "all" | number
+let tab = "fc";
+
+const $ = id => document.getElementById(id);
+const lname = n => n === 0 ? "К экзамену" : "Урок " + n;
+const inLesson = o => lesson === "all" || o.l === lesson;
+
+/* --- фильтр уроков --- */
+const chipsBox = $("lessons");
+const allChips = [["all","Все"]].concat(DATA.lessons.map(n => [n, lname(n)]));
+allChips.forEach(([v, t]) => {
+  const b = document.createElement("button");
+  b.className = "chip" + (v === "all" ? " on" : "");
+  b.textContent = t;
+  b.onclick = () => { lesson = v;
+    chipsBox.querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
+    b.classList.add("on"); refresh(); };
+  chipsBox.appendChild(b);
+});
+
+/* --- вкладки --- */
+document.querySelectorAll(".tabbar button").forEach(b => {
+  b.onclick = () => { tab = b.dataset.tab;
+    document.querySelectorAll(".tabbar button").forEach(x => x.classList.toggle("on", x === b));
+    ["fc","words","sx","texts"].forEach(t => $("tab-" + t).classList.toggle("hidden", t !== tab));
+    refresh(); };
+});
+
+function refresh(){
+  if (tab === "fc") fcNew();
+  if (tab === "words") renderWords();
+  if (tab === "sx") sxNew();
+  if (tab === "texts") renderTexts();
+}
+
+/* --- карточка иероглифа по клику --- */
+const spanify = str => Array.from(str).map(ch =>
+  /[一-鿿]/.test(ch) ? `<span class="hz-c">${ch}</span>` : ch).join("");
+function showChar(ch){
+  const exact = DATA.words.find(w => w.h === ch);
+  const withCh = DATA.words.filter(w => w.h.includes(ch) && w.h !== ch).slice(0, 8);
+  document.getElementById("sheet-char").textContent = ch;
+  document.getElementById("sheet-py").textContent = exact ? exact.p + "   " + exact.r : "";
+  document.getElementById("sheet-parts").textContent = exact && exact.c ? exact.c : "";
+  const box = document.getElementById("sheet-words");
+  box.innerHTML = withCh.length ? "<div style='color:var(--dim);font-size:12px'>слова с этим знаком:</div>" : "";
+  withCh.forEach(w => {
+    const d = document.createElement("div"); d.className = "wrow";
+    d.innerHTML = `<div class="hz">${w.h}</div><div><span class="py">${w.p}</span><br><span class="ru">${w.r}</span></div>`;
+    box.appendChild(d);
+  });
+  document.getElementById("sheet").classList.remove("hidden");
+}
+document.getElementById("sheet-close").onclick = () => document.getElementById("sheet").classList.add("hidden");
+document.addEventListener("click", e => {
+  if (e.target.classList && e.target.classList.contains("hz-c")) showChar(e.target.textContent);
+});
+
+/* --- карточки --- */
+const BOXW = {0:8,1:5,2:3,3:1.5,4:0.7};
+let fcWord = null, fcDir = "zh", fcShown = false, fcSession = {ok:0,all:0};
+function pick(list, key){
+  const ws = list.map(o => BOXW[(progress[key(o)]||{}).box || 0] || 0.7);
+  let s = ws.reduce((a,b)=>a+b,0), r = Math.random()*s;
+  for (let i=0;i<list.length;i++){ r -= ws[i]; if (r<=0) return list[i]; }
+  return list[list.length-1];
+}
+function fcNew(){
+  const pool = DATA.words.filter(inRotation);
+  if (!pool.length) return;
+  fcWord = pick(pool, o => o.h);
+  fcDir = Math.random() < 0.5 ? "zh" : "ru";
+  fcShown = false;
+  $("fc-lesson").textContent = lname(fcWord.l);
+  const q = $("fc-q");
+  if (fcDir === "zh"){ q.textContent = fcWord.h; q.classList.remove("small"); }
+  else { q.textContent = fcWord.r; q.classList.add("small"); }
+  $("fc-a").textContent = ""; $("fc-parts").textContent = "";
+  const bx = $("fc-btns"); bx.innerHTML = "";
+  const show = document.createElement("button");
+  show.className = "act primary"; show.textContent = "показать";
+  show.onclick = fcReveal; bx.appendChild(show);
+  stat();
+}
+function fcReveal(){
+  if (fcShown) return; fcShown = true;
+  if (fcDir === "zh"){ $("fc-a").textContent = fcWord.p + "   " + fcWord.r; }
+  else { $("fc-q").textContent = fcWord.h; $("fc-q").classList.remove("small"); $("fc-a").textContent = fcWord.p; }
+  $("fc-parts").textContent = fcWord.c || "";
+  const bx = $("fc-btns"); bx.innerHTML = "";
+  [["знал", true, "ok"], ["не знал", false, ""]].forEach(([t, v, cls]) => {
+    const b = document.createElement("button");
+    b.className = "act " + cls; b.textContent = t;
+    b.onclick = () => { bump(fcWord.h, v); fcSession.all++; if (v) fcSession.ok++; fcNew(); };
+    bx.appendChild(b);
+  });
+}
+function bump(key, ok){
+  const r = progress[key] || {box:0, seen:0, okc:0};
+  r.seen++; if (ok){ r.okc++; r.box = Math.min((r.box||0)+1, 4); } else r.box = 0;
+  progress[key] = r; saveP();
+}
+function stat(){
+  const pool = DATA.words.filter(inRotation);
+  const sure = pool.filter(o => (progress[o.h]||{}).box >= 3).length;
+  $("fc-stat").textContent = `за сессию: ${fcSession.ok}/${fcSession.all} · уверенно: ${sure} из ${pool.length}`
+    + (lesson === "all" && ROTATION.length < DATA.lessons.length
+      ? " · в ротации уроки " + ROTATION.join(",") : "");
+}
+
+/* --- слова --- */
+function renderWords(){
+  const q = ($("search").value || "").toLowerCase();
+  const box = $("wlist"); box.innerHTML = "";
+  DATA.words.filter(inLesson).filter(o =>
+    !q || o.h.includes(q) || o.p.toLowerCase().includes(q) || o.r.toLowerCase().includes(q)
+  ).forEach(o => {
+    const d = document.createElement("div"); d.className = "wrow";
+    d.innerHTML = `<div class="hz">${spanify(o.h)}</div>
+      <div><span class="py">${o.p}</span> <span class="lesson-tag">· ${lname(o.l).toLowerCase()}</span><br>
+      <span class="ru">${o.r}</span></div>` + (o.c ? `<div class="parts">${o.c}</div>` : "");
+    box.appendChild(d);
+  });
+}
+$("search").addEventListener("input", renderWords);
+
+/* --- фразы --- */
+let sent = null, built = [], sxScore = {ok:0, all:0};
+function sxNew(){
+  const pool = DATA.sents.filter(inRotation);
+  const box = $("sx-chips"); box.innerHTML = "";
+  $("sx-verdict").textContent = ""; $("sx-built").textContent = "…";
+  $("sx-built").classList.remove("good");
+  if (!pool.length){ $("sx-ru").textContent = "Для этого урока фраз пока нет."; sent = null; return; }
+  sent = pick(pool, o => "s:" + o.t.join(""));
+  built = [];
+  $("sx-ru").textContent = sent.r;
+  let order = sent.t.map((_, i) => i);
+  do { order.sort(() => Math.random() - 0.5); }
+  while (sent.t.length > 1 && order.every((v, i) => v === i));
+  order.forEach(idx => {
+    const b = document.createElement("button");
+    b.className = "hz"; b.textContent = sent.t[idx];
+    b.onclick = () => { if (b.disabled) return; b.disabled = true; built.push(idx);
+      $("sx-built").textContent = built.map(i => sent.t[i]).join("") || "…"; };
+    box.appendChild(b);
+  });
+}
+$("sx-reset").onclick = () => { if (!sent) return; built = [];
+  $("sx-chips").querySelectorAll("button").forEach(b => b.disabled = false);
+  $("sx-built").textContent = "…"; $("sx-built").classList.remove("good"); $("sx-verdict").textContent = ""; };
+$("sx-check").onclick = () => {
+  if (!sent) return;
+  const ok = built.length === sent.t.length && built.every((v, i) => v === i);
+  sxScore.all++;
+  bump("s:" + sent.t.join(""), ok);
+  if (ok){ sxScore.ok++; $("sx-built").classList.add("good");
+    $("sx-verdict").textContent = "对! верно"; }
+  else { $("sx-verdict").textContent = "правильно: " + sent.t.join(""); }
+  $("sx-score").textContent = `верно ${sxScore.ok} из ${sxScore.all}`;
+};
+$("sx-next").onclick = sxNew;
+
+/* --- тексты --- */
+let hidePy = false, hideRu = false;
+function renderTexts(){
+  const box = $("treader"); box.innerHTML = "";
+  const blocks = DATA.texts.filter(t => lesson === "all" || t.l === lesson);
+  if (!blocks.length){ box.innerHTML = '<div class="card">Для этого урока текстов пока нет.</div>'; return; }
+  blocks.forEach(bl => {
+    const h = document.createElement("div"); h.className = "t-h"; h.textContent = bl.title;
+    box.appendChild(h);
+    bl.rows.forEach(r => {
+      const d = document.createElement("div");
+      if (r.t === "zh"){ d.className = "t-zh hz"; d.innerHTML = spanify(r.x); }
+      else if (r.t === "pr"){ d.className = "t-pr";
+        d.innerHTML = (hidePy ? "" : `<span class="p">${r.p}</span> `) + (hideRu ? "" : `<span>${r.r}</span>`);
+        if (hidePy && hideRu) return; }
+      else if (r.t === "b"){ d.className = "t-b"; d.textContent = r.x; }
+      else { d.className = "t-pr"; if (hideRu) return; d.textContent = r.x; }
+      box.appendChild(d);
+    });
+  });
+}
+$("tg-py").onclick = () => { hidePy = !hidePy; $("tg-py").textContent = hidePy ? "показать пиньинь" : "скрыть пиньинь"; renderTexts(); };
+$("tg-ru").onclick = () => { hideRu = !hideRu; $("tg-ru").textContent = hideRu ? "показать перевод" : "скрыть перевод"; renderTexts(); };
+
+fcNew();
+</script>
