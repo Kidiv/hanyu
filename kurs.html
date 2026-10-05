@@ -4077,18 +4077,21 @@ var KursUI = (function () {
       body: [
         h('h1', {class: 'h1'}, 'Ханьюй-курс'),
         h('p', {class: 'lead'}, 'Подготовка к экзамену: устные темы и письмо. Запускаешь, дальше веду я.'),
-        h('p', {class: 'cap'}, 'Проверку лучше пройти, даже если знаешь мало: «Не знаю» там обычный ответ, а первые задания после неё будут проще.'),
+        h('p', {class: 'cap'}, X2.has() ? 'Внутри две вкладки: устная часть (темы, 70 баллов) и письменная (письмо как на экзамене и курс слов и знаков).'
+          : 'Проверку лучше пройти, даже если знаешь мало: «Не знаю» там обычный ответ, а первые задания после неё будут проще.'),
         banners(),
         h('div', {class: 'field'}, h('div', {class: 'lab'}, 'Экзамен'), h('div', {class: 'row'}, dateIn, lab)),
         h('div', {class: 'field'}, h('div', {class: 'lab'}, 'Сколько времени в день'),
           segment([[60, '60 мин'], [90, '90 мин'], [120, '120 мин']], minutes, function (v) { minutes = v; G.startMin = v; }))
       ],
       bar: [
-        mainBtn('Начать с проверки (8 минут)', function () { eng.setup(patch()); begin('diag'); }),
+        /* С разделом экзамена первый запуск ведёт сразу на главный экран (там устная и письменная вкладки), проверка курса по ссылке. */
+        X2.has() ? mainBtn('Начать', function () { eng.setup(patch()); eng.skipDiag(); save(); showRoute(); })
+          : mainBtn('Начать с проверки (8 минут)', function () { eng.setup(patch()); begin('diag'); }),
         links(
           lnk('У меня есть файл или код прогресса', sheetTransfer),
-          lnk('Пропустить проверку', function () { eng.setup(patch()); eng.skipDiag(); save(); showRoute(); })),
-        links(X2.has() ? lnk('Сразу к устным темам', X2.topics) : null),
+          X2.has() ? lnk('Сначала проверка курса, 8 минут', function () { eng.setup(patch()); begin('diag'); })
+            : lnk('Пропустить проверку', function () { eng.setup(patch()); eng.skipDiag(); save(); showRoute(); })),
         hint('Enter начать')
       ]
     });
@@ -5149,6 +5152,8 @@ var KursUI = (function () {
         if (l.indexOf('zh') !== 0 && l.indexOf('cmn') !== 0) continue;
         if (l.indexOf('hk') >= 0 || l.indexOf('yue') >= 0) continue;      // кантонский не подходит
         r = (l.indexOf('cn') >= 0 || l.indexOf('hans') >= 0 || l.indexOf('cmn') === 0) ? 2 : 1;
+        if (l === 'zh-cn') r = 4;                                          // обычный путунхуа; zh-cn-liaoning и подобные это говоры
+        else if (l.indexOf('zh-cn-') === 0) r = 1;
         if (/natural|online/i.test(vs[i].name || '')) r += 1;
         if (r > rank) { rank = r; best = vs[i]; }
       }
@@ -5281,10 +5286,9 @@ var KursUI = (function () {
 
     /* Сколько новых тем на сегодня: поровну на оставшиеся дни, но не меньше двух. */
     function quota(s) {
-      var dl = X.dl, d = day(), days;
-      if (dl == null || dl <= 2) return s.n;                 // счёт дней идёт вместе с днём экзамена: в сам день нового не учим
-      days = dl - 1;
-      return Math.max(2, Math.ceil((s.n - s.learned + d.nt) / days));
+      var dl = X.dl, d = day();
+      if (dl == null || dl <= 1) return s.n;                 // dl это дней до экзамена, сам день экзамена в счёт не идёт
+      return Math.max(2, Math.ceil((s.n - s.learned + d.nt) / dl));
     }
 
     function nextTopic() {
