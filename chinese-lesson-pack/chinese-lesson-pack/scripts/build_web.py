@@ -124,7 +124,7 @@ def build(src, rotation=None, version="v4"):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--src", default=r"C:\Users\Mechrevo\Documents\Китайский_экзамен")
+    ap.add_argument("--src", default=r"C:\Users\Astern\Documents\Китайский_экзамен")
     ap.add_argument("--rotation", default=None,
                     help="уроки в ротации карточек, через запятую; по умолчанию все")
     ap.add_argument("--version", default="v4")
