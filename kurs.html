@@ -350,6 +350,8 @@ button.cell.hole{padding:0;border:2px dashed var(--dim);border-radius:10px;backg
 .find-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
 .fchip{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer}
 .fchip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.vlab{margin:10px 0 0;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)}
+.vres{margin-top:6px}
 @media (max-height:560px){
   .bar{position:static}
   .fb-body{max-height:none}
@@ -5729,6 +5731,159 @@ var KursUI = (function () {
       G.keys.esc = back;
     }
 
+    /* ----- конструктор вариантов: образцы тетради с подстановкой ----- */
+
+    var V_HZ = ['一', '两', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+    var V_HPY = ['yī', 'liǎng', 'sān', 'sì', 'wǔ', 'liù', 'qī', 'bā', 'jiǔ', 'shí', 'shíyī', "shí'èr"];
+    var V_ORD = ['первого', 'второго', 'третьего', 'четвёртого', 'пятого', 'шестого', 'седьмого', 'восьмого', 'девятого', 'десятого', 'одиннадцатого', 'двенадцатого'];
+    var V_MZH = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+    var V_MPY = ['yī yuè', 'èr yuè', 'sān yuè', 'sì yuè', 'wǔ yuè', 'liù yuè', 'qī yuè', 'bā yuè', 'jiǔ yuè', 'shí yuè', 'shíyī yuè', "shí'èr yuè"];
+    var V_MGEN = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    var V_SUBJ = [{l: 'я', ru: 'я', zh: '我', py: 'wǒ', f: 0}, {l: 'он', ru: 'он', zh: '他', py: 'tā', f: 1}, {l: 'она', ru: 'она', zh: '她', py: 'tā', f: 1}, {l: 'мы', ru: 'мы', zh: '我们', py: 'wǒmen', f: 2}];
+    var V_DAY = [{l: 'нет', ru: '', zh: '', py: ''}, {l: 'сегодня', ru: 'сегодня', zh: '今天', py: 'jīntiān'}, {l: 'завтра', ru: 'завтра', zh: '明天', py: 'míngtiān'},
+      {l: 'в субботу', ru: 'в субботу', zh: '星期六', py: 'xīngqīliù'}, {l: 'в воскресенье', ru: 'в воскресенье', zh: '星期天', py: 'xīngqītiān'}, {l: 'в выходные', ru: 'в выходные', zh: '周末', py: 'zhōumò'}];
+    var V_PART = [{l: 'нет', ru: '', g: '', zh: '', py: ''}, {l: 'утром', ru: 'утром', g: 'утра', zh: '早上', py: 'zǎoshang'}, {l: 'днём', ru: 'днём', g: 'дня', zh: '下午', py: 'xiàwǔ'},
+      {l: 'вечером', ru: 'вечером', g: 'вечера', zh: '晚上', py: 'wǎnshang'}];
+    var V_HOUR = [{l: 'нет'}].concat(V_HZ.map(function (x, i) { return {l: String(i + 1)}; }));
+    var V_HALF = [{l: 'ровно'}, {l: 'с половиной'}];
+    var V_MODAL = [{l: 'нет', ru: null, zh: '', py: ''}, {l: 'собираюсь', ru: ['собираюсь', 'собирается', 'собираемся'], zh: '打算', py: 'dǎsuàn'},
+      {l: 'хочу', ru: ['хочу', 'хочет', 'хотим'], zh: '想', py: 'xiǎng'}, {l: 'могу', ru: ['могу', 'может', 'можем'], zh: '能', py: 'néng'}];
+    var V_GO = [{fut: ['пойду', 'пойдёт', 'пойдём'], inf: 'пойти', q: 'Пойдёшь'}, {fut: ['поеду', 'поедет', 'поедем'], inf: 'поехать', q: 'Поедешь'}];
+    var V_HOW = [{l: 'нет', ru: '', zh: '', py: '', go: 0}, {l: 'пешком', ru: 'пешком', zh: '走路', py: 'zǒu lù', go: 0}, {l: 'на автобусе', ru: 'на автобусе', zh: '坐公共汽车', py: 'zuò gōnggòng qìchē', go: 1},
+      {l: 'на метро', ru: 'на метро', zh: '坐地铁', py: 'zuò dìtiě', go: 1}, {l: 'на велосипеде', ru: 'на велосипеде', zh: '骑自行车', py: 'qí zìxíngchē', go: 1}];
+    var V_DEST = [{l: 'в магазин', ru: 'в магазин за покупками', zh: '商店买东西', py: 'shāngdiàn mǎi dōngxi'},
+      {l: 'в ближайший магазин', ru: 'в ближайший магазин за покупками', zh: '附近的商店买东西', py: 'fùjìn de shāngdiàn mǎi dōngxi'},
+      {l: 'в банк', ru: 'в банк снять деньги', zh: '银行取钱', py: 'yínháng qǔ qián'}, {l: 'на почту', ru: 'на почту', zh: '邮局', py: 'yóujú'},
+      {l: 'в университет', ru: 'в университет на занятия', zh: '大学上课', py: 'dàxué shàng kè'}, {l: 'на работу', ru: 'на работу', zh: '上班', py: 'shàngbān'},
+      {l: 'в центр', ru: 'в центр города', zh: '市中心', py: 'shì zhōngxīn'}, {l: 'к другу', ru: 'к другу', zh: '看朋友', py: 'kàn péngyou'}];
+    var V_TAIL = [{l: 'нет'}, {l: 'Пойдёшь со мной?', zh: '你跟我一起去吗？', py: 'Nǐ gēn wǒ yìqǐ qù ma?'}, {l: 'Хочешь со мной?', zh: '你想跟我一起去吗？', py: 'Nǐ xiǎng gēn wǒ yìqǐ qù ma?'}];
+    var V_ACT = [{l: 'начинаю работу', ru: ['начинаю работу', 'начинает работу', 'начинаем работу'], zh: '上班', py: 'shàngbān'},
+      {l: 'заканчиваю работу', ru: ['заканчиваю работу', 'заканчивает работу', 'заканчиваем работу'], zh: '下班', py: 'xiàbān'},
+      {l: 'иду на занятия', ru: ['иду на занятия', 'идёт на занятия', 'идём на занятия'], zh: '去上课', py: 'qù shàng kè'}];
+    var V_PRE = [{l: 'нет'}, {l: 'Сможешь меня встретить?', ru: 'Ты сможешь меня встретить?', zh: '你能来接我吗？', py: 'Nǐ néng lái jiē wǒ ma?'},
+      {l: 'Можешь меня подождать?', ru: 'Ты можешь меня подождать?', zh: '你能等我吗？', py: 'Nǐ néng děng wǒ ma?'}];
+    var V_PLACE = [{l: 'мой дом', n: 'Мой дом', g: 'моего дома', zh: '我家', py: 'wǒ jiā'}, {l: 'общежитие', n: 'Общежитие', g: 'общежития', zh: '宿舍', py: 'sùshè'},
+      {l: 'университет', n: 'Университет', g: 'университета', zh: '大学', py: 'dàxué'}, {l: 'банк', n: 'Банк', g: 'банка', zh: '银行', py: 'yínháng'},
+      {l: 'почта', n: 'Почта', g: 'почты', zh: '邮局', py: 'yóujú'}, {l: 'магазин', n: 'Магазин', g: 'магазина', zh: '商店', py: 'shāngdiàn'},
+      {l: 'станция метро', n: 'Станция метро', g: 'станции метро', zh: '地铁站', py: 'dìtiězhàn'}, {l: 'остановка автобуса', n: 'Автобусная остановка', g: 'автобусной остановки', zh: '汽车站', py: 'qìchēzhàn'},
+      {l: 'центр города', n: 'Центр города', g: 'центра города', zh: '市中心', py: 'shì zhōngxīn'}];
+    var V_DIST = [{l: 'близко', ru: 'близко от', zh: '很近', py: 'hěn jìn'}, {l: 'недалеко', ru: 'недалеко от', zh: '不远', py: 'bù yuǎn'},
+      {l: 'не очень далеко', ru: 'не очень далеко от', zh: '不太远', py: 'bú tài yuǎn'}, {l: 'далеко', ru: 'далеко от', zh: '很远', py: 'hěn yuǎn'}];
+    var V_FTAIL = [{l: 'нет'}, {l: 'пешком', ru: 'можем пойти пешком', zh: '我们可以走路去', py: 'wǒmen kěyǐ zǒu lù qù'},
+      {l: 'на велосипеде', ru: 'можем поехать на велосипеде', zh: '我们可以骑自行车去', py: 'wǒmen kěyǐ qí zìxíngchē qù'},
+      {l: 'на автобусе', ru: 'можем поехать на автобусе', zh: '我们可以坐公共汽车去', py: 'wǒmen kěyǐ zuò gōnggòng qìchē qù'}];
+    var V_WHERE = [{l: 'в отпуск', ru: 'в отпуск', zh: '放假', py: 'fàng jià'}, {l: 'в Пекин', ru: 'в Пекин', zh: '去北京', py: 'qù Běijīng'},
+      {l: 'в Шанхай', ru: 'в Шанхай', zh: '去上海', py: 'qù Shànghǎi'}, {l: 'в Китай', ru: 'в Китай', zh: '去中国', py: 'qù Zhōngguó'}];
+    var V_KNOW = [{l: 'нет'}, {l: 'ещё не знаю, но', zh: '还不知道，可是', py: 'hái bù zhīdào, kěshì'}];
+    var V_MON = V_MGEN.map(function (x, i) { return {l: String(i + 1)}; });
+    var V_DEC = [{l: 'в начале', ru: 'в начале', zh: '上旬', py: 'shàngxún'}, {l: 'в середине', ru: 'в середине', zh: '中旬', py: 'zhōngxún'}, {l: 'в конце', ru: 'в конце', zh: '下旬', py: 'xiàxún'}];
+
+    var VPAT = [
+      {id: 'go', t: 'Куда и когда', d: {subj: 0, day: 2, part: 0, hour: 0, half: 0, modal: 1, how: 0, dest: 1, tail: 2},
+        slots: [['subj', 'Кто', V_SUBJ], ['day', 'Когда', V_DAY], ['part', 'Время суток', V_PART], ['hour', 'Во сколько', V_HOUR], ['half', 'Полчаса', V_HALF],
+          ['modal', 'Глагол', V_MODAL], ['how', 'На чём', V_HOW], ['dest', 'Куда', V_DEST], ['tail', 'Позвать с собой', V_TAIL]]},
+      {id: 'time', t: 'Во сколько', d: {subj: 0, day: 0, part: 3, hour: 7, half: 0, act: 1, pre: 1},
+        slots: [['pre', 'Сначала вопрос', V_PRE], ['subj', 'Кто', V_SUBJ], ['day', 'Когда', V_DAY], ['part', 'Время суток', V_PART], ['hour', 'Во сколько', V_HOUR],
+          ['half', 'Полчаса', V_HALF], ['act', 'Что', V_ACT]]},
+      {id: 'far', t: 'Далеко ли', d: {a: 5, dist: 2, b: 1, tail: 2},
+        slots: [['a', 'Что', V_PLACE], ['dist', 'Как далеко', V_DIST], ['b', 'От чего', V_PLACE], ['tail', 'Как добраться', V_FTAIL]]},
+      {id: 'when', t: 'Когда поедешь', d: {where: 0, know: 1, mon: 5, dec: 2},
+        slots: [['where', 'Куда', V_WHERE], ['know', 'Начало ответа', V_KNOW], ['dec', 'Часть месяца', V_DEC], ['mon', 'Месяц', V_MON]]}
+    ];
+
+    function vCap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+    function vTime(v) {
+      var pt = V_PART[v.part], hr = v.hour, half = v.half === 1;
+      if (hr) return {zh: pt.zh + V_HZ[hr - 1] + '点' + (half ? '半' : ''), py: (pt.py ? pt.py + ' ' : '') + V_HPY[hr - 1] + ' diǎn' + (half ? ' bàn' : ''),
+        ru: (half ? 'в половине ' + V_ORD[hr % 12] : 'в ' + hr) + (pt.g ? ' ' + pt.g : '')};
+      return {zh: pt.zh, py: pt.py, ru: pt.ru};
+    }
+
+    function vJoin(list, sep) { return list.filter(function (x) { return !!x; }).join(sep == null ? ' ' : sep); }
+
+    /* Сборка фразы по образцу: китайский порядок слов свой, русский свой. */
+    function vBuild(p, v) {
+      var s, d, t, m, w, g, de, tl, a, pre, A, B, ds, ft, wh, kn, dec, zh, py, ru, note = '';
+      if (p.id === 'go') {
+        s = V_SUBJ[v.subj]; d = V_DAY[v.day]; t = vTime(v); m = V_MODAL[v.modal]; w = V_HOW[v.how]; g = V_GO[w.go]; de = V_DEST[v.dest]; tl = V_TAIL[v.tail];
+        zh = d.zh + t.zh + s.zh + m.zh + w.zh + '去' + de.zh + '。';
+        py = vCap(vJoin([d.py, t.py, s.py, m.py, w.py, 'qù', de.py])) + '.';
+        ru = vCap(vJoin([d.ru, t.ru, s.ru, m.ru ? m.ru[s.f] + ' ' + g.inf : g.fut[s.f], w.ru, de.ru])) + '.';
+        if (tl.zh) {
+          if (s.f === 0 && s.ru === 'я') { zh += tl.zh; py += ' ' + tl.py; ru += ' ' + (v.tail === 1 ? g.q + ' со мной?' : 'Хочешь ' + g.inf + ' со мной?'); }
+          else note = 'Позвать с собой можно, когда говорит «я».';
+        }
+      } else if (p.id === 'time') {
+        s = V_SUBJ[v.subj]; d = V_DAY[v.day]; t = vTime(v); a = V_ACT[v.act]; pre = V_PRE[v.pre];
+        zh = s.zh + d.zh + t.zh + a.zh + '。';
+        py = vCap(vJoin([s.py, d.py, t.py, a.py])) + '.';
+        ru = vCap(vJoin([d.ru, s.ru, a.ru[s.f], t.ru])) + '.';
+        if (pre.zh) {
+          if (s.f === 0 && s.ru === 'я') { zh = pre.zh + zh; py = pre.py + ' ' + py; ru = pre.ru + ' ' + ru; }
+          else note = 'Вопрос «встретишь меня» подходит, когда говорит «я».';
+        }
+      } else if (p.id === 'far') {
+        A = V_PLACE[v.a]; B = V_PLACE[v.b]; ds = V_DIST[v.dist]; ft = V_FTAIL[v.tail];
+        if (v.a === v.b) note = 'Выбери разные места.';
+        zh = A.zh + '离' + B.zh + ds.zh + (ft.zh ? '，' + ft.zh : '') + '。';
+        py = vCap(A.py) + ' lí ' + B.py + ' ' + ds.py + (ft.py ? ', ' + ft.py : '') + '.';
+        ru = A.n + ' ' + ds.ru + ' ' + B.g + (ft.ru ? ', ' + ft.ru : '') + '.';
+      } else {
+        wh = V_WHERE[v.where]; kn = V_KNOW[v.know]; dec = V_DEC[v.dec];
+        zh = '你打算什么时候' + wh.zh + '？' + (kn.zh || '') + '我想' + V_MZH[v.mon] + dec.zh + '去。';
+        py = 'Nǐ dǎsuàn shénme shíhou ' + wh.py + '? ' + vCap(vJoin([kn.py, 'wǒ xiǎng', V_MPY[v.mon], dec.py, 'qù'])) + '.';
+        ru = 'Когда ты собираешься ' + wh.ru + '? ' + (kn.zh ? 'Ещё не знаю, но хочу' : 'Хочу') + ' ' + dec.ru + ' ' + V_MGEN[v.mon] + '.';
+      }
+      return {zh: zh, py: py, ru: ru, note: note};
+    }
+
+    function vState() {
+      if (!X.vr) X.vr = {p: 0, sel: {}, hide: false};
+      VPAT.forEach(function (p) { if (!X.vr.sel[p.id]) X.vr.sel[p.id] = JSON.parse(JSON.stringify(p.d)); });
+      return X.vr;
+    }
+
+    function scrVariants(keepPos) {
+      enter();
+      var vr = vState(), p = VPAT[vr.p], v = vr.sel[p.id], r = vBuild(p, v), body = [], pats = h('div', {class: 'chips find-chips'}), card;
+      VPAT.forEach(function (q, i) {
+        pats.appendChild(h('button', {type: 'button', class: 'fchip' + (i === vr.p ? ' on' : ''), onclick: guard(function () { vr.p = i; scrVariants(false); })}, q.t));
+      });
+      body.push(pats);
+      card = h('div', {class: 'm-i vres'}, h('div', {class: 'm-ru'}, h('b', null, r.ru)));
+      if (vr.hide && !vr.open) {
+        card.appendChild(h('div', {class: 'cap'}, 'Напиши по-китайски на бумаге, потом открой и сверь.'));
+        card.appendChild(h('div', {class: 'say-r'}, h('button', {type: 'button', class: 'say', onclick: guard(function () { vr.open = true; scrVariants(true); })}, 'показать китайский')));
+      } else {
+        card.appendChild(zt('div', 'm-hz', r.zh));
+        card.appendChild(h('div', {class: 'm-py tn'}, pyN(r.py)));
+        var sr = sayRow(r.zh);
+        if (sr) card.appendChild(sr);
+      }
+      if (r.note) card.appendChild(h('div', {class: 'cap hot'}, r.note));
+      body.push(card);
+      p.slots.forEach(function (sl) {
+        var row = h('div', {class: 'chips find-chips'});
+        sl[2].forEach(function (o, i) {
+          row.appendChild(h('button', {type: 'button', class: 'fchip' + (v[sl[0]] === i ? ' on' : ''), onclick: guard(function () { v[sl[0]] = i; vr.open = false; scrVariants(true); })}, o.l));
+        });
+        body.push(h('div', {class: 'vlab'}, sl[1]));
+        body.push(row);
+      });
+      mount({top: head('Конструктор вариантов', toList), body: body, keep: !!keepPos, bar: [
+        mainBtn('Случайный вариант', function () {
+          p.slots.forEach(function (sl) { v[sl[0]] = Math.floor(Math.random() * sl[2].length); });
+          if (p.id === 'far' && v.a === v.b) v.b = (v.a + 1) % V_PLACE.length;
+          vr.open = false;
+          scrVariants(true);
+        }),
+        links(lnk(vr.hide ? 'Показывать китайский сразу' : 'Прятать китайский: писать по русскому', function () { vr.hide = !vr.hide; vr.open = false; scrVariants(true); }),
+          lnk('К темам', toList)),
+        hint('Esc к темам')]});
+      G.keys.esc = toList;
+    }
+
     /* ----- поиск фразы: любая фраза любой темы по нескольким буквам ----- */
 
     function findFlat(s) {
@@ -6018,6 +6173,10 @@ var KursUI = (function () {
         h('span', {class: 'xrow-m'}, cs.ok === cs.n ? '✓' : '★'),
         h('span', {class: 'xrow-t'}, 'Костяк: общие фразы', h('small', null, 'стоят сразу в нескольких темах, учи первыми')),
         h('span', {class: 'xrow-n'}, cs.ok === cs.n ? 'выучен' : 'выучено ' + cs.ok + ' из ' + cs.n)));
+      box.appendChild(h('button', {type: 'button', class: 'xrow core', onclick: barGuard(function () { scrVariants(false); })},
+        h('span', {class: 'xrow-m'}, '⇄'),
+        h('span', {class: 'xrow-t'}, 'Конструктор вариантов', h('small', null, 'фразы тетради с подстановкой: кто, когда, во сколько, куда, на чём, как далеко')),
+        h('span', {class: 'xrow-n'}, '')));
       box.appendChild(h('button', {type: 'button', class: 'xrow core', onclick: barGuard(function () { scrFind(); })},
         h('span', {class: 'xrow-m'}, '⌕'),
         h('span', {class: 'xrow-t'}, 'Найти фразу', h('small', null, 'любая фраза любой темы по нескольким буквам: по-русски, пиньинем или первыми буквами')),
@@ -6079,6 +6238,7 @@ var KursUI = (function () {
       }
       row(nx, 'Письмо как на экзамене', '5 фраз с пиньиня и 5 переводов',
         last ? 'вариантов ' + gen.length + ', последний ' + last.ok + ' из ' + last.of : 'ещё не писал', scrWriteIntro);
+      row(false, 'Конструктор вариантов', 'фразы тетради с подстановкой: прячешь китайский и пишешь по русскому', '', function () { scrVariants(false); });
       row(false, 'Письмо по устным темам', 'те же фразы, что рассказываешь вслух',
         'написано ' + sentState(own) + ' из ' + own.length, scrWriteTopics);
       return box;
