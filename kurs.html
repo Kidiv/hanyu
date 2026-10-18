@@ -6303,7 +6303,7 @@ var KursUI = (function () {
     }
 
     function imeModel() {
-      var M = {read: {}, uni: {'^': 0}, bi: {}, tri: {}, N: 0, ru: {}, whole: {}}, seed = 7;
+      var M = {read: {}, uni: {'^': 0}, bi: {}, tri: {}, N: 0, ru: {}, whole: {}, cl: [], clSeen: {}}, seed = 7;
       if (X.ime) return X.ime;
       function addRead(ch, toned) {
         var f = findFlat(toned).replace(/[^a-z]/g, ''), r;
@@ -6312,29 +6312,33 @@ var KursUI = (function () {
         if (!r[f]) r[f] = {t: toned.toLowerCase(), n: 0};
         r[f].n++;
       }
-      function clause(hz, py) {
+      /* w: вес фразы. Настоящие фразы курса весят 1, сгенерированные образцами меньше: иначе их случайные сочетания
+         («我九月…» из «когда вернёшься») перебивают обычную речь («我家…») */
+      function clause(hz, py, w) {
         var chars = hzChars(hz), sy = py ? tonedSyl(py) : [], prev = '^', pp = '^';
+        w = w || 1;
         if (!chars.length) return;
         if (sy.length === chars.length) chars.forEach(function (c, i) { addRead(c, sy[i]); });
-        M.uni['^']++;
-        M.whole[chars.join('')] = 1;
-        M.bi['^^'] = (M.bi['^^'] || 0) + 1;
+        M.uni['^'] += w;
+        if (w >= 1) M.whole[chars.join('')] = 1;
+        if (chars.length >= 3 && !M.clSeen[chars.join('')]) { M.clSeen[chars.join('')] = 1; M.cl.push(chars); }      // образец для подстановки
+        M.bi['^^'] = (M.bi['^^'] || 0) + w;
         chars.forEach(function (c) {
-          M.uni[c] = (M.uni[c] || 0) + 1; M.N++;
-          M.bi[prev + c] = (M.bi[prev + c] || 0) + 1;
-          M.tri[pp + prev + c] = (M.tri[pp + prev + c] || 0) + 1;
+          M.uni[c] = (M.uni[c] || 0) + w; M.N += w;
+          M.bi[prev + c] = (M.bi[prev + c] || 0) + w;
+          M.tri[pp + prev + c] = (M.tri[pp + prev + c] || 0) + w;
           pp = prev;
           prev = c;
         });
-        M.bi[prev + '$'] = (M.bi[prev + '$'] || 0) + 1;
+        M.bi[prev + '$'] = (M.bi[prev + '$'] || 0) + w;
       }
-      function feed(hz, py, ru) {
+      function feed(hz, py, ru, w) {
         /* предложение режется только по концу (。？！): запятая внутри не рвёт пары знаков, в запросе её нет */
         var hs = String(hz || '').split(/[。？！.?!]+/), ps = String(py || '').split(/[。？！.?!]+/);
         hs = hs.filter(function (x) { return hzChars(x).length; });
         ps = ps.filter(function (x) { return /[a-zA-Zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü]/.test(x); });
-        hs.forEach(function (x, i) { clause(x, hs.length === ps.length ? ps[i] : ''); });
-        if (ru) M.ru[hzChars(hz).join('')] = ru;
+        hs.forEach(function (x, i) { clause(x, hs.length === ps.length ? ps[i] : '', w); });
+        if (ru && (w || 1) >= 1) M.ru[hzChars(hz).join('')] = ru;
       }
       function rnd(n) { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % n; }
       Object.keys(D.lex || {}).forEach(function (w) {
@@ -6356,7 +6360,7 @@ var KursUI = (function () {
         for (k = 0; k < 60; k++) {
           v = JSON.parse(JSON.stringify(p.d));
           if (k) p.slots.forEach(function (sl) { v[sl[0]] = rnd(sl[2].length); });
-          try { r = vBuild(p, v); feed(r.zh, r.py, r.ru); } catch (e) {}
+          try { r = vBuild(p, v); feed(r.zh, r.py, r.ru, k ? 0.15 : 0.5); } catch (e) {}
         }
       });
       /* второе чтение, которое в словнике не записано, а на письме встречается */
@@ -6409,11 +6413,35 @@ var KursUI = (function () {
         nb.sort(function (a, b) { return b.sc - a.sc; });
         beam = nb.slice(0, 90);
       }
+      /* подстановка в готовую фразу: фраза курса той же длины, где не сходится один знак (в длинной до двух),
+         а на его место встаёт знак с нужным чтением. Так «我家有三口人» даёт «我家有一口人» */
+      function score(arr) { var t = 0, j; for (j = 0; j < arr.length; j++) t += lp(j > 1 ? arr[j - 2] : '^', j > 0 ? arr[j - 1] : '^', arr[j]); return t; }
+      M.cl.forEach(function (cl) {
+        var miss = [], j, arr, okT;
+        if (cl.length !== units.length) return;
+        for (j = 0; j < cl.length; j++) {
+          if (!readOf(cl[j], units[j])) { miss.push(j); if (miss.length > (units.length >= 8 ? 2 : 1)) return; }
+        }
+        if (!miss.length) return;
+        arr = cl.slice();
+        okT = miss.every(function (j2) {
+          var best = null, bs = -1e9;
+          cand[j2].forEach(function (x) {
+            var a = j2 > 0 ? arr[j2 - 1] : '^', z = j2 > 1 ? arr[j2 - 2] : '^', n1 = j2 + 1 < arr.length ? arr[j2 + 1] : null;
+            var sc = lp(z, a, x.c) + (n1 ? lp(a, x.c, n1) : 0);
+            if (sc > bs) { bs = sc; best = x.c; }
+          });
+          if (!best) return false;
+          arr[j2] = best;
+          return true;
+        });
+        if (okT) beam.push({s: arr.join(''), sc: score(arr) + (miss.length === 1 ? 7 : 4), py: arr.map(function (c, k) { return readOf(c, units[k]).t; })});
+      });
       beam.forEach(function (b) { if (M.whole[b.s]) b.sc += 6; });
       beam.sort(function (a, b) { return b.sc - a.sc; });
       res = [];
       beam.forEach(function (b) {
-        if (res.length >= 4 || seen[b.s] || (res.length && b.sc < beam[0].sc - 5)) return;
+        if (res.length >= 4 || seen[b.s] || (res.length && b.sc < beam[0].sc - 4)) return;
         seen[b.s] = 1;
         res.push({hz: b.s, py: vCap(b.py.join(' ')), ru: M.ru[b.s] || ''});
       });
