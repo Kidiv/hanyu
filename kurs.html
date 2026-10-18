@@ -6303,11 +6303,11 @@ var KursUI = (function () {
     }
 
     function imeModel() {
-      var M = {read: {}, uni: {'^': 0}, bi: {}, tri: {}, N: 0, ru: {}}, seed = 7;
+      var M = {read: {}, uni: {'^': 0}, bi: {}, tri: {}, N: 0, ru: {}, whole: {}}, seed = 7;
       if (X.ime) return X.ime;
       function addRead(ch, toned) {
         var f = findFlat(toned).replace(/[^a-z]/g, ''), r;
-        if (!f) return;
+        if (!f || !/[aeiouv]/.test(f)) return;
         r = M.read[ch] || (M.read[ch] = {});
         if (!r[f]) r[f] = {t: toned.toLowerCase(), n: 0};
         r[f].n++;
@@ -6317,6 +6317,7 @@ var KursUI = (function () {
         if (!chars.length) return;
         if (sy.length === chars.length) chars.forEach(function (c, i) { addRead(c, sy[i]); });
         M.uni['^']++;
+        M.whole[chars.join('')] = 1;
         M.bi['^^'] = (M.bi['^^'] || 0) + 1;
         chars.forEach(function (c) {
           M.uni[c] = (M.uni[c] || 0) + 1; M.N++;
@@ -6328,7 +6329,8 @@ var KursUI = (function () {
         M.bi[prev + '$'] = (M.bi[prev + '$'] || 0) + 1;
       }
       function feed(hz, py, ru) {
-        var hs = String(hz || '').split(/[，。？！、；：,.?!;:]+/), ps = String(py || '').split(/[，。？！、；：,.?!;:]+/);
+        /* предложение режется только по концу (。？！): запятая внутри не рвёт пары знаков, в запросе её нет */
+        var hs = String(hz || '').split(/[。？！.?!]+/), ps = String(py || '').split(/[。？！.?!]+/);
         hs = hs.filter(function (x) { return hzChars(x).length; });
         ps = ps.filter(function (x) { return /[a-zA-Zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü]/.test(x); });
         hs.forEach(function (x, i) { clause(x, hs.length === ps.length ? ps[i] : ''); });
@@ -6383,7 +6385,9 @@ var KursUI = (function () {
       /* тройки знаков, пары и одиночные вперемешку: тройки держат обороты образцов, одиночные не дают нулю */
       function lp(z, a, c) {
         var tr = M.tri[z + a + c] || 0, ab = M.bi[z + a] || 0, big = M.bi[a + c] || 0, ua = M.uni[a] || 0, uc = M.uni[c] || 0;
-        return Math.log(0.5 * (ab ? tr / ab : 0) + 0.35 * (ua ? big / ua : 0) + 0.15 * (uc / M.N) + 1e-7);
+        var x = Math.log(0.5 * (ab ? tr / ab : 0) + 0.35 * (ua ? big / ua : 0) + 0.15 * (uc / M.N) + 1e-7);
+        if (!big) x -= a === c ? 9 : 4;          // пары знаков, которой в курсе нет, почти не бывает: так отсекается «大友», «银行们»
+        return x;
       }
       function readOf(c, u) {
         var best = null, r = M.read[c];
@@ -6405,10 +6409,11 @@ var KursUI = (function () {
         nb.sort(function (a, b) { return b.sc - a.sc; });
         beam = nb.slice(0, 90);
       }
+      beam.forEach(function (b) { if (M.whole[b.s]) b.sc += 6; });
       beam.sort(function (a, b) { return b.sc - a.sc; });
       res = [];
       beam.forEach(function (b) {
-        if (res.length >= 6 || seen[b.s]) return;
+        if (res.length >= 4 || seen[b.s] || (res.length && b.sc < beam[0].sc - 5)) return;
         seen[b.s] = 1;
         res.push({hz: b.s, py: vCap(b.py.join(' ')), ru: M.ru[b.s] || ''});
       });
