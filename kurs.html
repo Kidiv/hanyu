@@ -4196,11 +4196,11 @@ var KursUI = (function () {
     }
     /* Экзамен из двух частей: устная (темы) и письменная (письмо в формате экзамена и курс). */
     var xt = X2.tab(dl), xs = 'course';
+    if (xt) body.push(X2.lessonCard());          // урок дня ведёт обе части, поэтому стоит над вкладками
     if (xt) body.push(X2.tabs(xt));
     if (xt === 'oral') { X2.oralHome(body); return; }
     if (xt) {
       xs = X2.writeStep();
-      body.push(X2.oralNote());
       body.push(X2.writeBox());
       body.push(h('div', {class: 'sub'}, 'Курс: слова, грамматика, знаки'));
     }
@@ -4233,7 +4233,8 @@ var KursUI = (function () {
     else if (r.mockOffer) l1 = lnk('Пробный по прошлогоднему образцу', scrMockIntro);
     if (s.away) l2 = lnk('Занимался на другом устройстве? Загрузи прогресс', sheetTransfer);
     /* На письменной вкладке ведёт так: сначала вариант письма за день, потом занятие курса. */
-    if (xs === 'write') mb = mainBtn('Письмо как на экзамене', X2.write);
+    if (xt && X2.lessonTodo()) mb = mainBtn(X2.lessonLabel(), X2.lesson);
+    else if (xs === 'write') mb = mainBtn('Письмо как на экзамене', X2.write);
     else mb = mainBtn(r.button || 'Начать занятие', function () { go(r); });
     if (xs !== 'course') {
       l0 = lnk(r.mockMain ? 'Пробный по прошлогоднему образцу' : (r.resume ? 'Продолжить занятие курса' : 'Занятие курса'), function () { go(r); });
@@ -5537,6 +5538,28 @@ var KursUI = (function () {
 
     function sheetLesson() { infoSheet('Как устроен урок дня', 'les'); }
 
+    /* Урок дня ведёт обе части экзамена: карточка стоит над вкладками, ведущая кнопка на обеих вкладках. */
+    function lessonCount() {
+      var o = {todo: 0, done: 0, n: 0};
+      if (!has()) return o;
+      lessonSteps().forEach(function (x) { o.n++; if (x.state === 'todo') o.todo++; else if (x.state === 'done') o.done++; });
+      return o;
+    }
+
+    function lessonTodo() { return lessonCount().todo; }
+
+    function lessonLabel() { return lessonCount().done ? 'Урок дня: продолжить' : 'Урок дня: начать'; }
+
+    function lessonCard() {
+      var c = lessonCount(), T = mainTopic();
+      return h('div', {class: 'card'}, h('button', {type: 'button', class: 'xrow core' + (c.todo ? ' next' : ''), onclick: barGuard(function () { scrLesson(); })},
+        h('span', {class: 'xrow-m'}, c.todo ? '→' : '✓'),
+        h('span', {class: 'xrow-t'}, 'Урок дня', h('small', null, 'обе части экзамена: фразы и темы вслух, тетрадь, знаки и письмо от руки' + (T ? '. Тема ' + (D.topics.indexOf(T) + 1) + ': ' + T.ru : ''))),
+        h('span', {class: 'xrow-n'}, c.todo ? 'сделано ' + c.done + ' из ' + c.n : 'сделан')));
+    }
+
+    function lessonBack() { X.lesStep = null; if (atHome()) home(); else scrTopics(); }
+
     /* ----- знаки к письму: разбор и порядок черт, два раза на бумаге, потом по памяти ----- */
 
     /* Предложения сегодняшнего письма выбираются один раз за день: знаки к письму берутся из них же. */
@@ -5650,7 +5673,7 @@ var KursUI = (function () {
       var steps = lessonSteps(), body = [], bar = [], box = h('div', {class: 'card'}), next = null, doneN = 0, T = mainTopic(), ti = T ? D.topics.indexOf(T) + 1 : 0;
       steps.forEach(function (s) { if (s.state === 'todo' && !next) next = s; if (s.state === 'done') doneN++; });
       body.push(h('h1', {class: 'h1'}, 'Урок дня'));
-      body.push(p(T ? 'Тема ' + ti + ' из ' + D.topics.length + ': ' + T.ru + '. Куски короткие, после любого можно встать: место сохранится.'
+      body.push(p(T ? 'Обе части экзамена в одном уроке: устное по теме ' + ti + ' из ' + D.topics.length + ' («' + T.ru + '») и письмо от руки. Куски короткие, после любого можно встать: место сохранится.'
         : 'Все темы пройдены. Сегодня только возврат: пересказ и письмо.'));
       steps.forEach(function (s) {
         box.appendChild(h('button', {type: 'button', class: 'xrow' + (s === next ? ' next' : ''), onclick: barGuard(function () { if (s.state === 'todo') lessonGo(s); })},
@@ -5664,11 +5687,11 @@ var KursUI = (function () {
       if (!next) body.push(h('div', {class: 'note'}, doneN ? 'Урок дня сделан. Больше сегодня не нужно: запоминается в перерыве, а не в повторении по кругу. Завтра начну с возврата.'
         : 'На сегодня ничего не назначено.'));
       if (next) bar.push(mainBtn((doneN ? 'Дальше: ' : 'Начать: ') + next.title, function () { lessonGo(next); }));
-      else bar.push(mainBtn('К темам', toList, 'good'));
-      bar.push(links(next ? lnk('К темам', toList) : null, lnk('Как устроен урок', sheetLesson), hardList().length ? lnk('Отложенные фразы', function () { X.lesStep = null; scrHard(); }) : null));
+      else bar.push(mainBtn('На главный экран', lessonBack, 'good'));
+      bar.push(links(next ? lnk('На главный экран', lessonBack) : null, lnk('Как устроен урок', sheetLesson), hardList().length ? lnk('Отложенные фразы', function () { X.lesStep = null; scrHard(); }) : null));
       bar.push(hint('Enter дальше · Esc к темам'));
-      mount({top: head('Урок дня', toList, 'сделано ' + doneN + ' из ' + steps.length), body: body, bar: bar});
-      G.keys.esc = toList;
+      mount({top: head('Урок дня', lessonBack, 'сделано ' + doneN + ' из ' + steps.length), body: body, bar: bar});
+      G.keys.esc = lessonBack;
     }
 
     /* Фразы, которые не дались три дня подряд: отложить (тема без них считается полной) или оставить. */
@@ -5918,7 +5941,8 @@ var KursUI = (function () {
       var lst = lessonSteps(), ltodo = 0, ldone = 0;
       lst.forEach(function (x) { if (x.state === 'todo') ltodo++; else if (x.state === 'done') ldone++; });
       if (ltodo) bar.push(mainBtn(ldone ? 'Урок дня: продолжить' : 'Урок дня: начать', scrLesson));
-      else bar.push(mainBtn('Урок дня сделан. К письменной части', function () { setTab('written'); }, 'good'));
+      else if (nx) bar.push(mainBtn((tState(nx).learned ? 'Повторить: ' : 'Учить: ') + nx.ru, function () { openTopic(nx); }));
+      else bar.push(mainBtn('Урок дня сделан. Темы по выбору ниже', scrTopics, 'good'));
       bar.push(links(lnk('Как оценивают', sheetCrit), lnk('Произношение', sheetPron), lnk('Ещё', sheetMore)));
       bar.push(hint('Enter дальше'));
       mount({body: body, bar: bar});
@@ -6730,6 +6754,7 @@ var KursUI = (function () {
     }
 
     return {has: has, step: step, tab: tab, tabs: tabs, oralHome: oralHome, oralNote: oralNote, writeBox: writeBox, writeStep: writeStep,
+      lessonCard: lessonCard, lessonTodo: lessonTodo, lessonLabel: lessonLabel, lesson: scrLesson,
       topics: toList, write: scrWriteIntro};
   })();
   /* === ЭКЗАМЕН-2026 КОНЕЦ === */
