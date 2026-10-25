@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ханьюй-тренажёр</title></head><body><noscript><div style="padding:14px;background:#b23a26;color:#fff;font-family:sans-serif">Этот просмотрщик отключил JavaScript, приложение не сможет работать. Откройте файл в браузере.</div></noscript><script>window.onerror=function(m,s,l,c){var d=document.createElement("div");d.style.cssText="padding:10px;background:#b23a26;color:#fff;font:13px sans-serif;white-space:pre-wrap";d.textContent="Ошибка: "+m+" ("+l+":"+c+")";document.body.insertBefore(d,document.body.firstChild);};document.addEventListener("DOMContentLoaded",function(){var v=document.getElementById("vtag");if(v)v.textContent="v8·js";});</script>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ханьюй-тренажёр</title></head><body><noscript><div style="padding:14px;background:#b23a26;color:#fff;font-family:sans-serif">Этот просмотрщик отключил JavaScript, приложение не сможет работать. Откройте файл в браузере.</div></noscript><script>window.onerror=function(m,s,l,c){var d=document.createElement("div");d.style.cssText="padding:10px;background:#b23a26;color:#fff;font:13px sans-serif;white-space:pre-wrap";d.textContent="Ошибка: "+m+" ("+l+":"+c+")";document.body.insertBefore(d,document.body.firstChild);};document.addEventListener("DOMContentLoaded",function(){var v=document.getElementById("vtag");if(v)v.textContent="v9·js";});</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+SC:wght@500;700&display=swap">
 <style>
 :root{
@@ -219,7 +219,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
 </style>
 
 <header>
-  <h1><span class="hz">汉语</span>Ханьюй-тренажёр <span id="vtag" style="font-size:11px;color:#98a1aa">v8</span></h1>
+  <h1><span class="hz">汉语</span>Ханьюй-тренажёр <span id="vtag" style="font-size:11px;color:#98a1aa">v9</span></h1>
   <div class="chips" id="lessons"></div>
 </header>
 <main>
@@ -918,6 +918,8 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
     e.ri = out.map(function (x) { return x.id; });
   }
   POOL.forEach(function (e) { parsePy(e); parseRu(e); });
+  var PREF4 = {};                                    // начала русских слов запаса: «здра», «спас»
+  RW.forEach(function (w) { if (w.base.length >= 4) PREF4[w.base.slice(0, 4)] = 1; });
 
   /* ---------- клавиатуры телефона: соседние клавиши ---------- */
   var ADJ = {};
@@ -934,6 +936,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
   keyboard(['qwertyuiop', 'asdfghjkl', 'zxcvbnm'], [0, 0.5, 1.5]);
   keyboard(['йцукенгшщзхъ', 'фывапролджэ', 'ячсмитьбю'], [0, 0, 1]);
   keyboard(['1234567890'], [0]);
+  ['ий', 'шщ', 'еэ', 'ьъ'].forEach(function (x) { ADJ[x] = ADJ[x.charAt(1) + x.charAt(0)] = 1; });   // частые русские путаницы: поиду, щас
   function adj(a, b) { return ADJ[a + b] === 1; }
   var LA = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`", CY = 'йцукенгшщзхъфывапролджэячсмитьбюё';
   function la2cy(s) { return String(s).toLowerCase().replace(/[a-z\[\];',.`]/g, function (c) { var k = LA.indexOf(c); return k < 0 ? c : CY.charAt(k); }); }
@@ -964,6 +967,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
 
   /* ---------- запрос ---------- */
   var Q = '', N = 0, NB = [], DIG = [], TS = new Uint8Array(1), MODE = 'py', MEMO = [], MK = [], UNITS = SY;
+  var WHOLE = false;                                 // русские слова через пробел: набранное слово целиком против одного слова фразы, без разрезов
   function prep(raw, mode) {
     var s = String(raw || ''), parts, i, at = 0, b = [];
     MODE = mode;
@@ -1054,6 +1058,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
     var i, k, lim, v;
     for (i = 0; i < N; i++) {
       if (col[i] > limit) continue;
+      if (WHOLE) { if (TS[i]) { k = NB[i]; v = col[i] + chunkCost(i, k); if (v < col[k]) col[k] = v; } continue; }
       lim = Math.min(NB[i], i + 6);
       for (k = i + 1; k <= lim; k++) { v = col[i] + chunkCost(i, k); if (v < col[k]) col[k] = v; }
     }
@@ -1074,6 +1079,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
       for (i = 0; i < N; i++) {
         base = prev[i];
         if (base > limit) continue;
+        if (WHOLE) { if (TS[i]) { k = NB[i]; v = base + sc(id, i, k); if (v < cur[k]) cur[k] = v; } continue; }
         lim = Math.min(NB[i], i + Math.max(ms, DIG[i]));
         for (k = i + 1; k <= lim; k++) { v = base + sc(id, i, k); if (v < cur[k]) cur[k] = v; }
       }
@@ -1099,8 +1105,9 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
         cur = dp[i * W1 + j];
         if (cur >= 1e9) continue;
         if (j < m) relax(i * W1 + j + 1, cur + UNITS[ids[j]].skip, i * W1 + j, 2);
+        if (WHOLE && !TS[i]) continue;
         lim = Math.min(NB[i], i + Math.max(ms, DIG[i]));
-        for (k = i + 1; k <= lim; k++) {
+        for (k = WHOLE ? NB[i] : i + 1; k <= (WHOLE ? NB[i] : lim); k++) {
           if (j < m) relax(k * W1 + j + 1, cur + sc(ids[j], i, k), i * W1 + j, 1);
           if (k - i <= 6) relax(k * W1 + j, cur + chunkCost(i, k), i * W1 + j, 3);
         }
@@ -1337,7 +1344,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
       }
       if (bj >= 0 && best < 9) { used[bj] = 1; cost += best; marks.push(bj); } else miss++;
     }
-    for (j = 0; j < ids.length; j++) if (!used[j] && RW[ids[j]].skip >= 0.6 && !STOP[RW[ids[j]].base]) rest++;
+    for (j = 0; j < ids.length; j++) if (!used[j] && (RW[ids[j]].skip >= 0.6 || /^\d/.test(RW[ids[j]].base)) && !STOP[RW[ids[j]].base]) rest++;
     c = cost + miss * 0.7 + rest * 0.12;
     if (e.neg === undefined) e.neg = NEG.test(e.ru.toLowerCase());
     if (ctx.qNeg !== e.neg) c += 0.6;                                  // «не говорю» и «говорю» разные
@@ -1362,9 +1369,12 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
     MAXSEG.ru = 16;
     if (mode === 'ru' && !/\s/.test(String(raw).trim())) {
       vow = (Q.match(/[аеиоуыэюя]/g) || []).length;
-      if (N >= 4 && vow / N < 0.3) MAXSEG.ru = 3;                 // первые буквы подряд: на слово не больше трёх букв
+      // первые буквы подряд: на слово не больше трёх букв; но если с первых четырёх букв начинается слово из запаса, это слово
+      if (N >= 4 && vow / N < 0.35 && !PREF4[Q.slice(0, 4)]) MAXSEG.ru = 3;
     }
-    var t0 = performance.now(), qi = queryInitials(raw, mode), cand = 0, slack = mode === 'py' ? 1 : 0.5, loose = mode === 'ru' && !/\s/.test(String(raw).trim());
+    var t0 = performance.now(), qi = queryInitials(raw, mode), cand = 0, slack = mode === 'py' ? 1 : 0.5;
+    var loose = mode === 'ru' && !/\s/.test(String(raw).trim()) && !(N >= 4 && PREF4[Q.slice(0, 4)]);   // первые буквы подряд, а не одно слово
+    WHOLE = mode === 'ru' && !loose;
     POOL.forEach(function (e) {
       var ini = mode === 'py' ? e.pin : e.rin, sh = mode === 'py' ? '' : e.rsh, m = ini.length, cp = capOf(m), d = 1e9, k, c;
       if (!m) return;
