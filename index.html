@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ханьюй-тренажёр</title></head><body><noscript><div style="padding:14px;background:#b23a26;color:#fff;font-family:sans-serif">Этот просмотрщик отключил JavaScript, приложение не сможет работать. Откройте файл в браузере.</div></noscript><script>window.onerror=function(m,s,l,c){var d=document.createElement("div");d.style.cssText="padding:10px;background:#b23a26;color:#fff;font:13px sans-serif;white-space:pre-wrap";d.textContent="Ошибка: "+m+" ("+l+":"+c+")";document.body.insertBefore(d,document.body.firstChild);};document.addEventListener("DOMContentLoaded",function(){var v=document.getElementById("vtag");if(v)v.textContent="v9·js";});</script>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ханьюй-тренажёр</title></head><body><noscript><div style="padding:14px;background:#b23a26;color:#fff;font-family:sans-serif">Этот просмотрщик отключил JavaScript, приложение не сможет работать. Откройте файл в браузере.</div></noscript><script>window.onerror=function(m,s,l,c){var d=document.createElement("div");d.style.cssText="padding:10px;background:#b23a26;color:#fff;font:13px sans-serif;white-space:pre-wrap";d.textContent="Ошибка: "+m+" ("+l+":"+c+")";document.body.insertBefore(d,document.body.firstChild);};document.addEventListener("DOMContentLoaded",function(){var v=document.getElementById("vtag");if(v)v.textContent="v10·js";});</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+SC:wght@500;700&display=swap">
 <style>
 :root{
@@ -219,7 +219,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
 </style>
 
 <header>
-  <h1><span class="hz">汉语</span>Ханьюй-тренажёр <span id="vtag" style="font-size:11px;color:#98a1aa">v9</span></h1>
+  <h1><span class="hz">汉语</span>Ханьюй-тренажёр <span id="vtag" style="font-size:11px;color:#98a1aa">v10</span></h1>
   <div class="chips" id="lessons"></div>
 </header>
 <main>
@@ -815,17 +815,21 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
       })(0, {});
       return out;
     }
-    var d = p.d, keys = p.slots.map(function (s) { return s[0]; });
-    out.push(JSON.parse(JSON.stringify(d)));
-    keys.forEach(function (a, i) {
-      for (var x = 0; x < sz[i]; x++) {
-        if (x === d[a]) continue;
-        var v1 = JSON.parse(JSON.stringify(d)); v1[a] = x; out.push(v1);
-        keys.forEach(function (b, j) {
-          if (j <= i) return;
-          for (var y = 0; y < sz[j]; y++) { if (y === d[b]) continue; var v2 = JSON.parse(JSON.stringify(v1)); v2[b] = y; out.push(v2); }
-        });
-      }
+    var keys = p.slots.map(function (s) { return s[0]; }), zero = {};
+    keys.forEach(function (a) { zero[a] = 0; });
+    // от исходного варианта и от самого простого («Я пойду в магазин»): меняются одна или две строки
+    [p.d, zero].forEach(function (d) {
+      out.push(JSON.parse(JSON.stringify(d)));
+      keys.forEach(function (a, i) {
+        for (var x = 0; x < sz[i]; x++) {
+          if (x === d[a]) continue;
+          var v1 = JSON.parse(JSON.stringify(d)); v1[a] = x; out.push(v1);
+          keys.forEach(function (b, j) {
+            if (j <= i) return;
+            for (var y = 0; y < sz[j]; y++) { if (y === d[b]) continue; var v2 = JSON.parse(JSON.stringify(v1)); v2[b] = y; out.push(v2); }
+          });
+        }
+      });
     });
     return out;
   }
@@ -1087,7 +1091,13 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
       // набрано только начало: хвост фразы стоит 0,05 за слог или слово, не больше 0,5; начало не короче трёх
       if (wantPrefix && j >= 2 && j < m - 1 && cur[N] <= capOf(j + 1) + 1e-9 && cur[N] + tail(m - j - 1) < PREF.c) { PREF.c = cur[N] + tail(m - j - 1); PREF.j = j + 1; }
       mn = 1e9;
-      for (k = 0; k <= N; k++) { v = cur[k] + Math.max(0, (m - j - 1) - (N - k)) * (MODE === 'py' ? 0.5 : 0.3); if (v < mn) mn = v; }
+      // лишние слова фразы сверх запроса; если годится начало, они уходят в хвост не дешевле 0,05 («куяввш»: «часов утра» не набраны)
+      for (k = 0; k <= N; k++) {
+        v = Math.max(0, (m - j - 1) - (N - k)) * (MODE === 'py' ? 0.5 : 0.3);
+        if (wantPrefix && v > 0.05) v = 0.05;
+        v += cur[k];
+        if (v < mn) mn = v;
+      }
       if (mn > limit + 1e-9) return 1e9;
       t = prev; prev = cur; cur = t;
     }
@@ -1227,19 +1237,21 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
   function fitPattern(p, pen, out) {
     var memo = {}, best = null, zero = {}, field = MODE === 'py' ? 'pi' : 'ri', kw = MODE === 'ru' ? FITKW : null;
     p.slots.forEach(function (s) { zero[s[0]] = 0; });
-    function ev(v) {
-      var key = JSON.stringify(v), r, res;
-      if (memo[key]) return memo[key];
-      res = {c: 1e9, x: null};
+    // lim: дороже не нужно (сравниваем с лучшим), счёт обрывается раньше; цена не выше lim точная, выше нет
+    function ev(v, lim) {
+      var key = JSON.stringify(v), r, res, old = memo[key];
+      if (lim === undefined) lim = 60;
+      if (old && (old.bad || old.lim >= lim || old.c <= old.lim)) return old;
+      res = {c: 1e9, x: null, lim: kw ? 1e9 : lim};
       try { r = vBuild(p, v); } catch (e) { r = null; }
       if (r && !r.note) {
         [r].concat(splitParts(r.zh, r.py, r.ru)).forEach(function (x) {
           var e = {zh: x.zh, py: x.py, ru: x.ru}, c, m = null;
           parsePy(e); parseRu(e); setInitials(e);
-          if (kw) { c = kwScore(kw, e); m = kw.marks; } else c = quick(e[field], 60);
-          if (c < res.c) res = {c: c, x: e, kw: m};
+          if (kw) { c = kwScore(kw, e); m = kw.marks; } else { c = quick(e[field], lim, true); if (PREF.c < c) { c = PREF.c; e.prej = PREF.j; } }   // ненабранный хвост дёшев
+          if (c < res.c) res = {c: c, x: e, kw: m, lim: res.lim};
         });
-      }
+      } else res.bad = true;                         // сочетание запрещено
       memo[key] = res;
       return res;
     }
@@ -1247,20 +1259,32 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
     [[p.d, p.slots], [zero, rev]].forEach(function (run) {
       var v = JSON.parse(JSON.stringify(run[0])), cur = ev(v), pass = 0, moved = true;
       if (best && best.c === 0) return;
-      while (moved && pass++ < 4 && cur.c > 0) {
+      while (moved && pass++ < 8 && cur.c > 0) {        // замена двух строк сразу идёт только после застревания, ей нужны свои проходы
         moved = false;
         run[1].forEach(function (sl) {
-          var k = sl[0], keep = v[k], bi = keep, bc = cur.c, i, e;
+          var k = sl[0], keep = v[k], bi = keep, bc = cur.c, bz = null, i, e, j, k2, o, e3;
           for (i = 0; i < sl[2].length; i++) {
             if (i === keep) continue;
             v[k] = i;
-            e = ev(v);
-            if (e.c < bc - 1e-9) { bc = e.c; bi = i; }
+            e = ev(v, bc);
+            if (e.c < bc - 1e-9) { bc = e.c; bi = i; bz = null; }
+            if (!e.bad) continue;
+            // сочетание запрещено («встретишь меня?» при «мы», «вечером в 3»): сбрасываем в ноль одну из других строк
+            for (j = 0; j < p.slots.length; j++) {
+              k2 = p.slots[j][0]; o = v[k2];
+              if (k2 === k || !o) continue;
+              v[k2] = 0;
+              e3 = ev(v, bc);
+              if (e3.c < bc - 1e-9) { bc = e3.c; bi = i; bz = k2; }
+              v[k2] = o;
+            }
           }
           v[k] = bi;
+          if (bz) v[bz] = 0;
           if (bi !== keep) { cur = ev(v); moved = true; }
         });
-        if (cur.x && cur.c > capOf(cur.x[field].length) + 3) break;      // образец далёк от запроса
+        // образец далёк от запроса; после первого прохода не судим: «мы» в первом проходе запирает «встретишь меня?», второй проход это снимает
+        if (pass >= 2 && cur.x && cur.c > capOf(cur.x[field].length) + 3) break;
         if (!moved && cur.c > 0) {
           // одиночные замены застряли: пробуем менять две соседние строки сразу (часть суток и час и т.п.)
           var sl = p.slots, bestV = null, bc = cur.c;
@@ -1269,7 +1293,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
             for (var a = 0; a < sl[i][2].length; a++) for (var b = 0; b < sl[j][2].length; b++) {
               if (a === oi || b === oj) continue;
               v[ki] = a; v[kj] = b;
-              var e2 = ev(v);
+              var e2 = ev(v, bc);
               if (e2.c < bc - 1e-9) { bc = e2.c; bestV = JSON.parse(JSON.stringify(v)); }
             }
             v[ki] = oi; v[kj] = oj;
@@ -1289,13 +1313,13 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
         for (i = 0; i < sl[2].length; i++) {
           if (i === best.v[sl[0]]) continue;
           w[sl[0]] = i;
-          e2 = ev(w);
+          e2 = ev(w, best.c + 1e-9);
           if (e2.x && e2.c <= best.c + 1e-9 && !seenZh[e2.x.zh] && got.length < 4) { seenZh[e2.x.zh] = 1; e2.x.kwm = e2.kw; got.push(e2.x); }
         }
       });
       got.forEach(function (e) {
         e.src = 'конструктор: ' + p.t.toLowerCase(); e.l = p.l; e.v = 2;
-        out.push({e: e, c: best.c + pen, mode: MODE, alt: pen > 0, kw: kw ? e.kwm : undefined});
+        out.push({e: e, c: best.c + pen, mode: MODE, alt: pen > 0, kw: kw ? e.kwm : undefined, pre: kw ? undefined : e.prej});
       });
     }
   }
@@ -1374,9 +1398,13 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
     }
     var t0 = performance.now(), qi = queryInitials(raw, mode), cand = 0, slack = mode === 'py' ? 1 : 0.5;
     var loose = mode === 'ru' && !/\s/.test(String(raw).trim()) && !(N >= 4 && PREF4[Q.slice(0, 4)]);   // первые буквы подряд, а не одно слово
+    // первые буквы подряд: допуск от длины набранного (5 букв дают 1,25), а не от длины фразы; вариант «одно слово» (одна буква)
+    // пропускал почти весь запас. До трёх букв это может быть и слово целиком («рис», «нет»), там всё как было
+    var cpQ = loose && N >= 4 ? Math.max(1, 0.25 * N) : 1e9;
+    if (loose && N >= 4) { slack = 0.25; qi = qi.slice(0, 1); }
     WHOLE = mode === 'ru' && !loose;
     POOL.forEach(function (e) {
-      var ini = mode === 'py' ? e.pin : e.rin, sh = mode === 'py' ? '' : e.rsh, m = ini.length, cp = capOf(m), d = 1e9, k, c;
+      var ini = mode === 'py' ? e.pin : e.rin, sh = mode === 'py' ? '' : e.rsh, m = ini.length, cp = Math.min(capOf(m), cpQ), d = 1e9, k, c;
       if (!m) return;
       for (k = 0; k < qi.length && d > cp + slack; k++) d = Math.min(d, initDist(qi[k], ini, sh, cp + slack, mode === 'py' ? null : e.rsyn, loose));
       if (d > cp + slack) return;
