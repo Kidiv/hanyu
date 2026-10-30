@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ханьюй-тренажёр</title></head><body><noscript><div style="padding:14px;background:#b23a26;color:#fff;font-family:sans-serif">Этот просмотрщик отключил JavaScript, приложение не сможет работать. Откройте файл в браузере.</div></noscript><script>window.onerror=function(m,s,l,c){var d=document.createElement("div");d.style.cssText="padding:10px;background:#b23a26;color:#fff;font:13px sans-serif;white-space:pre-wrap";d.textContent="Ошибка: "+m+" ("+l+":"+c+")";document.body.insertBefore(d,document.body.firstChild);};document.addEventListener("DOMContentLoaded",function(){var v=document.getElementById("vtag");if(v)v.textContent="v10·js";});</script>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ханьюй-тренажёр</title></head><body><noscript><div style="padding:14px;background:#b23a26;color:#fff;font-family:sans-serif">Этот просмотрщик отключил JavaScript, приложение не сможет работать. Откройте файл в браузере.</div></noscript><script>window.onerror=function(m,s,l,c){var d=document.createElement("div");d.style.cssText="padding:10px;background:#b23a26;color:#fff;font:13px sans-serif;white-space:pre-wrap";d.textContent="Ошибка: "+m+" ("+l+":"+c+")";document.body.insertBefore(d,document.body.firstChild);};document.addEventListener("DOMContentLoaded",function(){var v=document.getElementById("vtag");if(v)v.textContent="v11·js";});</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+SC:wght@500;700&display=swap">
 <style>
 :root{
@@ -127,7 +127,12 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
 #ch-search{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:10px;
   background:var(--panel);color:var(--ink);font:inherit;font-size:16px}
 .ch-top{position:sticky;top:0;background:var(--bg);padding:8px 0 6px;z-index:4}
-.ch-hint{color:var(--dim);font-size:12px;margin-top:6px}
+.ch-hint{color:var(--dim);font-size:12px;margin:0 0 4px;line-height:1.5}
+.ch-hint > summary{cursor:pointer;list-style:none;display:inline-block;padding:2px 0}
+.ch-hint > summary::-webkit-details-marker{display:none}
+.ch-hint > summary::after{content:" ▾"}
+.ch-hint[open] > summary::after{content:" ▴"}
+@media (max-height:520px){.ch-top{padding:4px 0 3px}}   /* низкий экран: шапка тоньше */
 .ch-sec{background:var(--panel);border:1px solid var(--line);border-radius:14px;
   box-shadow:var(--shadow);margin:8px 0;overflow:hidden}
 .ch-sec > summary{cursor:pointer;list-style:none;padding:13px 16px;font-weight:600;font-size:15.5px;
@@ -219,7 +224,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
 </style>
 
 <header>
-  <h1><span class="hz">汉语</span>Ханьюй-тренажёр <span id="vtag" style="font-size:11px;color:#98a1aa">v10</span></h1>
+  <h1><span class="hz">汉语</span>Ханьюй-тренажёр <span id="vtag" style="font-size:11px;color:#98a1aa">v11</span></h1>
   <div class="chips" id="lessons"></div>
 </header>
 <main>
@@ -270,9 +275,11 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
   <section id="tab-ch" class="hidden">
     <div class="ch-top">
       <input id="ch-search" placeholder="поиск по шпаргалке: 了, счётные, даты, 离…">
-      <div class="ch-hint">Ищи по-русски, пиньинем без тонов (gongsi) или иероглифом. Нажми на иероглиф, чтобы увидеть чтение и перевод.
-        Предложение уроков 1-10 находится по пиньиню, первым буквам слогов (wjyskr) или по-русски своими словами (сегодня я еду в магазин), опечатки прощаются.</div>
     </div>
+    <!-- подсказка не в закреплённой шапке и свёрнута: на маленьком экране (сложенный Z Flip) она занимала полэкрана -->
+    <details class="ch-hint" id="ch-hint"><summary>Как искать</summary>
+      Ищи по-русски, пиньинем без тонов (gongsi) или иероглифом. Нажми на иероглиф, чтобы увидеть чтение и перевод.
+      Предложение уроков 1-10 находится по пиньиню, первым буквам слогов (wjyskr) или по-русски своими словами (сегодня я еду в магазин), опечатки прощаются.</details>
     <div id="ch-sent"></div>
     <div id="ch-list"></div>
   </section>
@@ -2018,6 +2025,7 @@ function renderCheat(){
   }
 }
 $("ch-search").addEventListener("input", renderCheat);
+if (innerHeight >= 700 && innerWidth >= 600) $("ch-hint").open = true;   // на большом экране подсказка места не жалеет
 
 /* --- предложения уроков 1-10 в шпаргалке: пиньинь, первые буквы, по-русски своими словами, с опечатками (движок poisk18.js) --- */
 let s8Timer = 0;
