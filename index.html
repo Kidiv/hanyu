@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ханьюй-тренажёр</title></head><body><noscript><div style="padding:14px;background:#b23a26;color:#fff;font-family:sans-serif">Этот просмотрщик отключил JavaScript, приложение не сможет работать. Откройте файл в браузере.</div></noscript><script>window.onerror=function(m,s,l,c){var d=document.createElement("div");d.style.cssText="padding:10px;background:#b23a26;color:#fff;font:13px sans-serif;white-space:pre-wrap";d.textContent="Ошибка: "+m+" ("+l+":"+c+")";document.body.insertBefore(d,document.body.firstChild);};document.addEventListener("DOMContentLoaded",function(){var v=document.getElementById("vtag");if(v)v.textContent="v11·js";});</script>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ханьюй-тренажёр</title></head><body><noscript><div style="padding:14px;background:#b23a26;color:#fff;font-family:sans-serif">Этот просмотрщик отключил JavaScript, приложение не сможет работать. Откройте файл в браузере.</div></noscript><script>window.onerror=function(m,s,l,c){var d=document.createElement("div");d.style.cssText="padding:10px;background:#b23a26;color:#fff;font:13px sans-serif;white-space:pre-wrap";d.textContent="Ошибка: "+m+" ("+l+":"+c+")";document.body.insertBefore(d,document.body.firstChild);};document.addEventListener("DOMContentLoaded",function(){var v=document.getElementById("vtag");if(v)v.textContent="v12·js";});</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+SC:wght@500;700&display=swap">
 <style>
 :root{
@@ -40,6 +40,12 @@ main{max-width:760px;margin:0 auto;padding:4px 16px}
 .tabbar button .ico{font-size:19px;line-height:1}
 @media (max-width:360px){ .tabbar button{font-size:10px} .tabbar button .ico{font-size:17px} }
 .tabbar button.on{color:var(--acc)}
+@media (max-height:520px){   /* низкий экран (сложенный Z Flip): разделы наверху и уезжают с прокруткой, скрипт переносит их под заголовок */
+  body{padding-bottom:12px}
+  .tabbar{position:static;max-width:760px;margin:0 auto;background:none;border-top:0;
+    border-bottom:1px solid var(--line);padding:0 4px 4px}
+  .tabbar button{padding:3px 2px}
+}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
   padding:16px;margin:10px 0}
 button.act{background:var(--chip);color:var(--ink);border:0;border-radius:10px;padding:10px 18px;
@@ -224,7 +230,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
 </style>
 
 <header>
-  <h1><span class="hz">汉语</span>Ханьюй-тренажёр <span id="vtag" style="font-size:11px;color:#98a1aa">v11</span></h1>
+  <h1><span class="hz">汉语</span>Ханьюй-тренажёр <span id="vtag" style="font-size:11px;color:#98a1aa">v12</span></h1>
   <div class="chips" id="lessons"></div>
 </header>
 <main>
@@ -1575,6 +1581,14 @@ document.querySelectorAll(".tabbar button").forEach(b => {
     document.getElementById("lessons").classList.toggle("hidden", tab === "ch");
     refresh(); };
 });
+/* Низкий экран: панель разделов стоит под заголовком, а не висит внизу (на сложенном Z Flip она съедала место). */
+const navBar = document.querySelector(".tabbar"), lowMQ = matchMedia("(max-height:520px)");
+function placeNav(){
+  if (lowMQ.matches) document.querySelector("header").after(navBar);
+  else $("sheet").after(navBar);
+}
+placeNav();
+if (lowMQ.addEventListener) lowMQ.addEventListener("change", placeNav); else lowMQ.addListener(placeNav);
 
 function refresh(){
   if (tab === "fc") fcNew();
