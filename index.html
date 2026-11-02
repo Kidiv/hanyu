@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ханьюй-тренажёр</title></head><body><noscript><div style="padding:14px;background:#b23a26;color:#fff;font-family:sans-serif">Этот просмотрщик отключил JavaScript, приложение не сможет работать. Откройте файл в браузере.</div></noscript><script>window.onerror=function(m,s,l,c){var d=document.createElement("div");d.style.cssText="padding:10px;background:#b23a26;color:#fff;font:13px sans-serif;white-space:pre-wrap";d.textContent="Ошибка: "+m+" ("+l+":"+c+")";document.body.insertBefore(d,document.body.firstChild);};document.addEventListener("DOMContentLoaded",function(){var v=document.getElementById("vtag");if(v)v.textContent="v18·js";});</script>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ханьюй-тренажёр</title></head><body><noscript><div style="padding:14px;background:#b23a26;color:#fff;font-family:sans-serif">Этот просмотрщик отключил JavaScript, приложение не сможет работать. Откройте файл в браузере.</div></noscript><script>window.onerror=function(m,s,l,c){var d=document.createElement("div");d.style.cssText="padding:10px;background:#b23a26;color:#fff;font:13px sans-serif;white-space:pre-wrap";d.textContent="Ошибка: "+m+" ("+l+":"+c+")";document.body.insertBefore(d,document.body.firstChild);};document.addEventListener("DOMContentLoaded",function(){var v=document.getElementById("vtag");if(v)v.textContent="v19·js";});</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+SC:wght@500;700&display=swap">
 <style>
 :root{
@@ -185,6 +185,13 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
 .t-pr{color:var(--dim);font-size:13px;margin:0 0 4px}
 .t-pr .p{color:var(--acc)}
 .t-b{color:var(--dim);font-size:13px;border-left:3px solid var(--line);padding-left:10px;margin:10px 0}
+.t-breakdown{display:inline;margin-left:6px}
+.t-breakdown > summary{display:inline-block;list-style:none;cursor:pointer;color:var(--dim);font-size:12px;font-weight:400;padding:3px 4px;text-decoration:underline dotted;text-underline-offset:3px}
+.t-breakdown > summary::-webkit-details-marker{display:none}
+@media (hover: hover){.t-breakdown > summary:hover{color:var(--acc)}}
+.t-breakdown > summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:3px}
+.t-breakdown[open]{display:block;margin:3px 0 8px}
+.t-breakdown .t-b{margin:7px 0;font-weight:400}
 .toggles{position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:3}
 .hidden{display:none}
 .hz-c{cursor:pointer}
@@ -235,7 +242,7 @@ button.act:focus-visible,.chip:focus-visible,.tabbar button:focus-visible{outlin
 </style>
 
 <header>
-  <h1><span class="hz">汉语</span>Ханьюй-тренажёр <span id="vtag" style="font-size:11px;color:#98a1aa">v18</span></h1>
+  <h1><span class="hz">汉语</span>Ханьюй-тренажёр <span id="vtag" style="font-size:11px;color:#98a1aa">v19</span></h1>
   <div class="chips" id="lessons"></div>
 </header>
 <main>
@@ -2100,10 +2107,11 @@ function renderTexts(){
     bl.rows.forEach(r => {
       if (r.t === "sp") return;
       if (r.t === "b" && r.x === "Разбор по словам:") {
-        detail = document.createElement("details"); detail.className = "card";
+        detail = document.createElement("details"); detail.className = "t-breakdown";
         const summary = document.createElement("summary");
-        summary.textContent = "Разбор слов, знаков и их роли"; detail.appendChild(summary);
-        box.appendChild(detail); return;
+        summary.textContent = "разбор"; detail.appendChild(summary);
+        const caption = box.lastElementChild;
+        (caption && caption.classList.contains("t-pr") ? caption : box).appendChild(detail); return;
       }
       if (detail && r.t === "b" && r.x.includes("Роль:")) {
         const p = document.createElement("p"); p.className = "t-b";
